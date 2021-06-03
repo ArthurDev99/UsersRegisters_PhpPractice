@@ -1,6 +1,9 @@
 // GLOBAL VARIABLES
-var image;
-getAllUsers();
+var image = ""; // => GUARDA LA IMAGEN SELECCIONADA POR EL USUARIO EN BASE 64
+
+getAllUsers(); // INVOCAMOS FUNCIÓN PARA CARGAR LOS REGISTROS
+
+
 // FUNCIÓN DE REGISTRO/ACTUALIZACIÓN DE USUARIO
 $(document).ready(function () {
 
@@ -108,7 +111,7 @@ function getUserInfo(id) {
                 chargueData(data.Data[0].UsuarioId,
                     data.Data[0].Nombre,
                     data.Data[0].Apellidos,
-                    data.Data[0].Usuario, data.Data[0].FotoPath);
+                    data.Data[0].Usuario,data.Data[0].FotoPath);
             } else {
                 swal("Algo salió mal!", data.Message, "error");
             }
@@ -116,47 +119,91 @@ function getUserInfo(id) {
     });
 }
 
-// FUNCION DE CARGUE DE DATOS EN FORMULARIO
+// FUNCION DE CARGUE DE DATOS EN FORMULARIO CUANDO SE EDITA UN USUARIO
 function chargueData(id, nombre, apellidos, usuario, fotoPath) {
+
+    // ASIGNAMOS VALORES A CAMPOS DE FORMULARIO
     document.getElementById("UserId").value = id;
     document.getElementById("Nombre").value = nombre;
     document.getElementById("Apellidos").value = apellidos;
     document.getElementById("Usuario").value = usuario;
-    var html = `<img src='${fotoPath}' class="ImageSelected" width="30%"/>`;
+
+    // CREAMOS ETQUETA DE IMAGEN
+    var html = `<img src='${fotoPath}' class="ImageSelected" width="300"/>`;
+    // ASIGNAMOS ETIQUETA A #DIVPHOTO
     document.getElementById("DivPhoto").innerHTML = html;
+
+    // OCULTAMOS TABLA Y MOSTRAMOS IMAGEN    
+    showElement("tableUsers",false);
+    showElement("DivPhotoContainer", true);
+
 
 }
 
 // FUNCIÓN DE LIMPIEZA DE FORMULARIO
 function cleanForm() {
+
+    // REMOVEMOS VALORES DE CAMPOS EN EL FORMUARIO
     document.getElementById("UserId").value = '';
     document.getElementById("Nombre").value = '';
     document.getElementById("Apellidos").value = '';
     document.getElementById("Usuario").value = '';
     document.getElementById("Password").value = '';
     document.getElementById("UserPhoto").value = null;
+
+    // REMOVEMOS LA IMAGEN AGREGADA A #DIVPHOTO
     $(".ImageSelected").remove();
+
+    // MOSTRAMOS TABLA OCULTAMOS IMAGEN
+    
+    showElement("tableUsers",true);
+    showElement("DivPhotoContainer", false);
 
 }
 
 // FUNCION PARA CAPTURAR LA IMAGEN SUBIDA POR EL USUARIO
 function captureImage() {
+
+    // VALIDAMOS SI HAY ARCHIVOS SELECCIONADOS
     var size = document.getElementById("UserPhoto").files.length;
-    console.log("Entro con " + size + " imagenes");
+    
     if (size > 0) {
+        // CONVERTIMOS IMAGEN EN BASE 64 PARA ENVIAR
         var photo = document.getElementById("UserPhoto").files[0];
         getBase64FromFile(photo);
+        showElement("tableUsers",false);
+        showElement("DivPhotoContainer", true);
+
+    }else
+    {
+        image ="";
+        
+        showElement("tableUsers",true);
+        showElement("DivPhotoContainer", false);
     }
 }
 
 // FUNCIÓN PARA CONVERTIR A BASE 64
 function getBase64FromFile(file) {
     var fileReader = new FileReader();
+
+    // AGREGAMOS EVENTO DE CARGA
     fileReader.addEventListener('load', function (evt) {
         image = fileReader.result;
-        var html = `<img src='${image}' class="ImageSelected" width="30%"/>`;
+
+        // CREAMOS ETQUETA DE IMAGEN
+        var html = `<img src='${image}' class="ImageSelected" width="300"/>`;
+
+        // ASIGNAMOS ETIQUETA A #DIVPHOTO
         document.getElementById("DivPhoto").innerHTML = html;
-        console.log("Asignado");
+
     });
     fileReader.readAsDataURL(file);
 }
+
+// FUNCIÓN PARA OCULTAR/MOSTRAR ELEMENTO
+function showElement(elementId, show)
+{
+    document.getElementById(elementId).style.display = show ? "" : "none";
+}
+

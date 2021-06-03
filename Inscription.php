@@ -25,13 +25,9 @@
                 <input type="password" name="Password" id="Password" class="form-control">
             </div>
             <div class="row">
-                <div class="col-6">
+                <div class="col-12">
                     Foto de perfil <br>
                     <input type="file" accept=".jpg, .png" id="UserPhoto" onchange="captureImage()">
-                </div>
-                <div class="col-6">
-                    <div id="DivPhoto" class="mb-2+ text-center">
-                    </div>
                 </div>
             </div>
             <div class="text-right">
@@ -66,10 +62,19 @@
             </thead>
 
             <tbody>
-                
+
             </tbody>
 
         </table>
+
+        <div>
+            <div id="DivPhotoContainer" class=" text-center" style="display: none">
+                <h3>Foto de usuario</h3>
+                <div id="DivPhoto" class="mb-2">
+
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

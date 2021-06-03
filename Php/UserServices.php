@@ -61,13 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $usuario = $_POST["Usuario"];
                     $contrasena = $_POST["Password"];
                     $userId = $_POST["UsuarioId"];
+                    $userPhoto = $_POST["UserPhoto"];
 
                     $userData = array(
                         "Nombre" => $nombre,
                         "Apellidos" => $apellidos,
                         "Usuario" => $usuario,
                         "Password" => $contrasena,
-                        "UsuarioId" => $userId
+                        "UsuarioId" => $userId, 
+                        "UserPhoto" =>$userPhoto
                     );
 
                     $functions = new MyFunctions();
