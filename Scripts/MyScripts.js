@@ -51,6 +51,11 @@ function getAllUsers() {
             var data = JSON.parse(response);
             if (data.Success) {
                 $(".rowData").remove();
+                if (data.Data.length > 0) {
+                    showElement("contBtnGenerateReport", true)
+                } else {
+                    showElement("contBtnGenerateReport", false)
+                }
                 for (var dato in data.Data) {
                     $("#tableUsers>tbody").append(
                         `<tr class="rowData">
@@ -111,7 +116,8 @@ function getUserInfo(id) {
                 chargueData(data.Data[0].UsuarioId,
                     data.Data[0].Nombre,
                     data.Data[0].Apellidos,
-                    data.Data[0].Usuario,data.Data[0].FotoPath);
+                    data.Data[0].Usuario,
+                    data.Data[0].FotoPath);
             } else {
                 swal("Algo salió mal!", data.Message, "error");
             }
@@ -129,12 +135,20 @@ function chargueData(id, nombre, apellidos, usuario, fotoPath) {
     document.getElementById("Usuario").value = usuario;
 
     // CREAMOS ETQUETA DE IMAGEN
-    var html = `<img src='${fotoPath}' class="ImageSelected" width="300"/>`;
+    if (fotoPath == undefined || fotoPath == "") {
+
+        var html = `<h3 class="ImageSelected text-warning">This user haven't a photo.</h1>`;
+    } else {
+
+        var html = `<img src='${fotoPath}' class="ImageSelected" width="300"/>`;
+    }
     // ASIGNAMOS ETIQUETA A #DIVPHOTO
     document.getElementById("DivPhoto").innerHTML = html;
 
-    // OCULTAMOS TABLA Y MOSTRAMOS IMAGEN    
-    showElement("tableUsers",false);
+    // OCULTAMOS TABLA Y MOSTRAMOS IMAGEN  
+    showElement("contBtnGenerateReport", false);
+    showElement("contBtnUploadDoc", false);
+    showElement("tableUsers", false);
     showElement("DivPhotoContainer", true);
 
 
@@ -153,10 +167,12 @@ function cleanForm() {
 
     // REMOVEMOS LA IMAGEN AGREGADA A #DIVPHOTO
     $(".ImageSelected").remove();
+    $("#lblUserPhoto").text("Seleccionar...");
 
-    // MOSTRAMOS TABLA OCULTAMOS IMAGEN
-    
-    showElement("tableUsers",true);
+    // MOSTRAMOS TABLA OCULTAMOS IMAGEN    
+    showElement("contBtnUploadDoc", true);
+    showElement("contBtnGenerateReport", true);
+    showElement("tableUsers", true);
     showElement("DivPhotoContainer", false);
 
 }
@@ -166,19 +182,23 @@ function captureImage() {
 
     // VALIDAMOS SI HAY ARCHIVOS SELECCIONADOS
     var size = document.getElementById("UserPhoto").files.length;
-    
+
     if (size > 0) {
         // CONVERTIMOS IMAGEN EN BASE 64 PARA ENVIAR
         var photo = document.getElementById("UserPhoto").files[0];
-        getBase64FromFile(photo);
-        showElement("tableUsers",false);
-        showElement("DivPhotoContainer", true);
 
-    }else
-    {
-        image ="";
-        
-        showElement("tableUsers",true);
+        getBase64FromFile(photo);
+        showElement("contBtnGenerateReport", false);
+        showElement("tableUsers", false);
+        showElement("DivPhotoContainer", true);
+        $("#lblUserPhoto").text(document.getElementById("UserPhoto").files[0].name);
+
+    } else {
+        image = "";
+        $("#lblUserPhoto").text("Seleccionar...");        
+        showElement("contBtnUploadDoc", true);
+        showElement("contBtnGenerateReport", true);
+        showElement("tableUsers", true);
         showElement("DivPhotoContainer", false);
     }
 }
@@ -190,7 +210,6 @@ function getBase64FromFile(file) {
     // AGREGAMOS EVENTO DE CARGA
     fileReader.addEventListener('load', function (evt) {
         image = fileReader.result;
-
         // CREAMOS ETQUETA DE IMAGEN
         var html = `<img src='${image}' class="ImageSelected" width="300"/>`;
 
@@ -202,8 +221,12 @@ function getBase64FromFile(file) {
 }
 
 // FUNCIÓN PARA OCULTAR/MOSTRAR ELEMENTO
-function showElement(elementId, show)
-{
+function showElement(elementId, show) {
     document.getElementById(elementId).style.display = show ? "" : "none";
+}
+
+// FUNCION PARA CARGAR EXCELENTE
+function chargueDoc() {
+    $("#FormDoc").trigger("submit");
 }
 

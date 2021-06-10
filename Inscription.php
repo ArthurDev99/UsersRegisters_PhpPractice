@@ -28,6 +28,7 @@
                 <div class="col-12">
                     Foto de perfil <br>
                     <input type="file" accept=".jpg, .png" id="UserPhoto" onchange="captureImage()">
+                    <label for="UserPhoto" id="lblUserPhoto">Seleccionar...</label>
                 </div>
             </div>
             <div class="text-right">
@@ -40,32 +41,57 @@
     </div>
 
     <div class="col-lg-6 mt-4">
-        <table class="table limit-height" id="tableUsers">
-            <thead class="thead-dark text-center">
-                <tr>
-                    <th>
-                        Nombre
-                    </th>
+        <div class="mb-3">
+            <div>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6" id="contBtnGenerateReport">
 
-                    <th>
-                        Apellido
-                    </th>
+                            <a href="Php/ExcelFiles/GenerateReport.php" class="btn btn-info">Generar reporte</a>
+                        </div>
+                        <div class="col-md-6" id="contBtnUploadDoc">
+                            <form action="Php/ExcelFiles/SaveUserFromFile.php" method="POST" id="FormDoc" enctype="multipart/form-data">
+                                <input type="file" name="ChargueReport" id="ChargueReport" accept=".xlsx, .csv" onchange="chargueDoc()">
+                                <label for="ChargueReport" id="lblDocExcel">Subir excel</label>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
 
-                    <th>
-                        Usuario
-                    </th>
+            </div>
+        </div>
+        <div class="ejemplo">
 
-                    <th>
-                        Actions
-                    </th>
-                </tr>
-            </thead>
 
-            <tbody>
+            <table class="table limit-height" id="tableUsers">
+                <thead class="thead-dark text-center">
+                    <tr>
+                        <th>
+                            Nombre
+                        </th>
 
-            </tbody>
+                        <th>
+                            Apellido
+                        </th>
 
-        </table>
+                        <th>
+                            Usuario
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                </tbody>
+
+            </table>
+        </div>
 
         <div>
             <div id="DivPhotoContainer" class=" text-center" style="display: none">

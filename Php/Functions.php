@@ -37,8 +37,9 @@ class MyFunctions
                 $this->validateParam($userData["Nombre"])
                 && $this->validateParam($userData["Apellidos"])
                 && $this->validateParam($userData["Usuario"])
-                && $this->validateParam($userData["Password"]
-                    && $this->validateParam($userData["UserPhoto"]))
+                && $this->validateParam(
+                    $userData["Password"]
+                )
             ) {
 
                 $DBConection = new Conexion();
@@ -55,9 +56,11 @@ class MyFunctions
                 // VALIDAMOS RESPUESTA
                 if ($stm->execute() > 0) {
                     // GUARDAMOS IMAGEN DE USUARIO
-                    $saveImage = $this->saveImage($userData["UserPhoto"], uniqid(), $DBConection->lastInsertId());
-                    if (!$saveImage) {
-                        $DBConection->RollBack();
+                    if ($this->validateParam($userData["UserPhoto"])) {
+                        $saveImage = $this->saveImage($userData["UserPhoto"], $DBConection->lastInsertId());
+                        if (!$saveImage) {
+                            $DBConection->RollBack();
+                        }
                     }
                     return $this->createResponse(true, "Registro exitoso!", null);
                 } else {
@@ -78,22 +81,38 @@ class MyFunctions
     function getUserById($id)
     {
         try {
+
+            $DBConection = new Conexion();
+
             // VALIDAMOS PARÁMETRO
             if (isset($id)) {
-                $DBConection = new Conexion();
-
                 // CREAMOS EL QUERY
-                $sql = "SELECT U.UsuarioId, U.Nombre, U.Apellidos, U.Usuario, F.FotoPath, F.FotoId FROM Usuarios U inner join FotoPerfil F on U.UsuarioId = F.UsuarioId WHERE U.UsuarioId = :id";
+                $sql = "SELECT U.UsuarioId, U.Nombre, U.Apellidos, U.Usuario, F.FotoPath FROM Usuarios U inner join FotoPerfil F on F.UsuarioId = U.UsuarioId WHERE U.UsuarioId = :id";
                 $stm = $DBConection->prepare($sql);
                 $stm->bindValue(":id", $id);
-
-                if ($stm->execute() > 0) {
+                $stm->execute();
+                if ($stm->rowCount() > 0) {
                     $stm->setFetchMode(PDO::FETCH_ASSOC);
+
+
                     $userData = $stm->fetchAll();
 
-                    return $this->createResponse(true, "Usuario encontrado", $userData);
+                    return $this->createResponse(true, "Usuario encontrado con foto", $userData);
                 } else {
-                    return $this->createResponse(false, "Usuario no encontrado", null);
+                    $sql = "SELECT U.UsuarioId, U.Nombre, U.Apellidos, U.Usuario FROM Usuarios U WHERE U.UsuarioId = :id";
+                    $stm = $DBConection->prepare($sql);
+                    $stm->bindValue(":id", $id);
+                    $stm->execute();
+
+                    if ($stm->rowCount() > 0) {
+                        $stm->setFetchMode(PDO::FETCH_ASSOC);
+
+                        $userData = $stm->fetchAll();
+
+                        return $this->createResponse(true, "Usuario encontrado sin foto", $userData);
+                    } else {
+                        return $this->createResponse(false, "Usuario no encontrado", null);
+                    }
                 }
             } else {
                 return $this->createResponse(false, "Identificador de registro nulo.", null);
@@ -133,10 +152,14 @@ class MyFunctions
                     if (isset($userData["UserPhoto"]) && $this->validateParam($userData["UserPhoto"])) {
                         // OBTENEMOS LA IMAGEN A ACTUALIZAR
                         $imageToUpdate = $this->getUserImage($userData["UsuarioId"]);
-                        
-                        // ACTUALIZAMOS LA IMAGEN
-                        $updateImage = $this->updateUserImage($DBConection, $userData["UsuarioId"], $imageToUpdate->FotoPath, $userData["UserPhoto"]);
-                        if(!$updateImage) return $this->createResponse(false, "Error al actualizar la imagen.", null);
+                        if ($imageToUpdate != null) {
+                            // ACTUALIZAMOS LA IMAGEN
+                            $updateImage = $this->updateUserImage($DBConection, $userData["UsuarioId"], $imageToUpdate->FotoPath, $userData["UserPhoto"]);
+                            if (!$updateImage) return $this->createResponse(false, "Error al actualizar la imagen.", null);
+                        } else {
+                            // GUARDAMOS IMAGEN
+                            $this->saveImage($userData['UserPhoto'], $userData['UsuarioId']);
+                        }
                     }
 
                     // VALIDAMOS RESPUESTA
@@ -173,8 +196,11 @@ class MyFunctions
                 $sql = "DELETE FROM usuarios WHERE UsuarioId = :id";
                 $stm = $DBConection->prepare($sql);
                 $stm->bindValue(":id", $userId);
-                $deleteImage = $this->deleteUserImage($userId, $result->FotoPath);
 
+                $deleteImage = true;
+                if (isset($result->FotoPath)) {
+                    $deleteImage = $this->deleteUserImage($userId, $result->FotoPath);
+                }
                 // VALIDAMOS RESPUESTA
                 if ($deleteImage && $stm->execute() > 0) {
                     return $this->createResponse(true, "Se ha eliminado correctamente!", null);
@@ -212,9 +238,9 @@ class MyFunctions
     }
 
     // GUARDA UNA IMAGEN DE USUARIO CON SU USUARIO
-    function saveImage($base64, $name, $userId)
+    function saveImage($base64, $userId)
     {
-        $directoryToPhoto = $this->baseDirectory . $name;
+        $directoryToPhoto = $this->baseDirectory;
         if (!is_dir($directoryToPhoto)) {
             mkdir($directoryToPhoto, 0777, true);
         }
@@ -225,7 +251,7 @@ class MyFunctions
         $base64 = str_replace(' ', '+', $base64);
         $data = base64_decode($base64);
 
-        $file = $directoryToPhoto . "/ProfilePhoto" . "." . $typeFile;
+        $file = $directoryToPhoto . uniqid() . "." . $typeFile;
         $success = file_put_contents($file, $data);
         if ($success) {
             $this->insertNewFotoPerfil($file, $userId);
@@ -279,19 +305,17 @@ class MyFunctions
     // FUNCIÓN PARA ELIMINAR LA IMAGEN DE UN USUARIOS
     function deleteUserImage($userId, $fotoPath)
     {
-        if (isset($userId)) {
+        if (isset($userId) && $this->validateParam($fotoPath)) {
             // CREAMOS CONEXIÓN
             $DBConection = new Conexion();
 
             // CAPTURAMOS RUTA DE ARCHIVO
             $nameFolder = explode('/', $fotoPath);
-            $path = $this->baseDirectory . $nameFolder[count($nameFolder) - 2];
+            $path = $this->baseDirectory . $nameFolder[count($nameFolder) - 1];
 
             // ELIMINAMOS LOS ARCHIVOS DEL DIRECTORIO
-            array_map('unlink', glob($path . "/*"));
-
-            // ELIMINAMOS EL DIRECTORIO
-            rmdir($path);
+            array_map('unlink', glob($path));
+            
 
             // BORRAMOS EL REGISTRO DE LA BASE DE DATOS
             $sql = "DELETE FROM FotoPerfil WHERE UsuarioId = :UsuarioId";
@@ -301,17 +325,20 @@ class MyFunctions
             // RETORNAMOS LA RESPUESTA DEL PROCESO
             return $statement->execute() > 0;
         }
-        return false;
+        return true;
     }
 
     function updateUserImage($DBConection, $userId, $fotoPath, $base64)
     {
         // CAPTURAMOS RUTA DE ARCHIVO
         $nameFolder = explode('/', $fotoPath);
-        $path = $this->baseDirectory . $nameFolder[count($nameFolder) - 2];
+        $path = $this->baseDirectory;
+
+        // CAPTURAMOS EL NOMBRE DEL ARCHIVO ACTUAL
+        $nameActualPhoto = explode('.',$nameFolder[count($nameFolder) - 1])[0];
 
         // ELIMINAMOS LOS ARCHIVOS DEL DIRECTORIO
-        array_map('unlink', glob($path . "/*"));
+        array_map('unlink', glob($path . "/". $nameFolder[count($nameFolder) - 1]));
 
         // OBTENEMOS EL FORMATO DE LA NUEVA IMAGEN
         $typeFile = $this->getTypeFile($base64);
@@ -322,7 +349,7 @@ class MyFunctions
         $data = base64_decode($base64);
 
         //  PREPARAMOS LA CREACIÓN DEL NUEVO ARCHIVO
-        $file = $path . "/ProfilePhoto" . "." . $typeFile;
+        $file = $path . "/". $nameActualPhoto . "." . $typeFile;
         $success = file_put_contents($file, $data);
 
         // REALIZAMOS EL REGISTRO EN LA BD SI TODO SALE BIEN
