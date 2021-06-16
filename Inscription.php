@@ -1,4 +1,9 @@
-<div class="row justify-content-center mt-3">
+<div class = "row text-center" id = "loading">
+<div class = "col-md-6">
+<h3>Cargando...</h3>
+</div>
+</div>
+<div class="row justify-content-center mt-3" id="contentPage" style="display: none">
     <div class="col-lg-6">
         <form class="form-data mt-4" id="dataForm">
 

@@ -3,10 +3,11 @@ var image = ""; // => GUARDA LA IMAGEN SELECCIONADA POR EL USUARIO EN BASE 64
 
 getAllUsers(); // INVOCAMOS FUNCIÓN PARA CARGAR LOS REGISTROS
 
-
 // FUNCIÓN DE REGISTRO/ACTUALIZACIÓN DE USUARIO
 $(document).ready(function () {
 
+    showElement("loading",false);
+    showElement("contentPage",true);
     $('#dataForm').submit(function (e) {
         e.preventDefault();
         var data =
